@@ -11,8 +11,14 @@ export default function AdminDashboard() {
   const [assigningId, setAssigningId] = useState<string | null>(null);
   
   // New state for User Management
-  const [activeTab, setActiveTab] = useState<'REQUESTS' | 'USERS'>('REQUESTS');
+  const [activeTab, setActiveTab] = useState<'REQUESTS' | 'USERS' | 'CATEGORIES'>('REQUESTS');
   const [users, setUsers] = useState<any[]>([]);
+  
+  // New state for Category Management
+  const [categories, setCategories] = useState<any[]>([]);
+  const [newCatName, setNewCatName] = useState("");
+  const [newCatDesc, setNewCatDesc] = useState("");
+  const [addingCategory, setAddingCategory] = useState(false);
 
   const fetchRequests = async () => {
     try {
@@ -50,8 +56,20 @@ export default function AdminDashboard() {
     }
   };
 
+  const fetchCategories = async () => {
+    try {
+      const res = await fetch("/api/categories");
+      const data = await res.json();
+      if (res.ok) {
+        setCategories(data);
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
   useEffect(() => {
-    Promise.all([fetchRequests(), fetchOfficers(), fetchUsers()]).finally(() => setLoading(false));
+    Promise.all([fetchRequests(), fetchOfficers(), fetchUsers(), fetchCategories()]).finally(() => setLoading(false));
   }, []);
 
   const handleRoleChange = async (userId: string, newRole: string) => {
@@ -69,6 +87,30 @@ export default function AdminDashboard() {
       }
     } catch (err) {
       alert("Error updating role");
+    }
+  };
+
+  const handleAddCategory = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setAddingCategory(true);
+    try {
+      const res = await fetch("/api/categories", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: newCatName, description: newCatDesc })
+      });
+      if (res.ok) {
+        setNewCatName("");
+        setNewCatDesc("");
+        await fetchCategories();
+      } else {
+        const data = await res.json();
+        alert(data.message || "Failed to add category");
+      }
+    } catch (err) {
+      alert("Error adding category");
+    } finally {
+      setAddingCategory(false);
     }
   };
 
@@ -148,6 +190,16 @@ export default function AdminDashboard() {
         >
           Manage Users
         </button>
+        <button 
+          onClick={() => setActiveTab('CATEGORIES')}
+          style={{ 
+            background: "none", border: "none", color: activeTab === 'CATEGORIES' ? "var(--accent-primary)" : "var(--text-secondary)",
+            padding: "8px 16px", fontSize: "1rem", fontWeight: 600, cursor: "pointer",
+            borderBottom: activeTab === 'CATEGORIES' ? "2px solid var(--accent-primary)" : "2px solid transparent"
+          }}
+        >
+          Manage Categories
+        </button>
       </div>
 
       <div>
@@ -222,7 +274,7 @@ export default function AdminDashboard() {
           </div>
         )}
           </>
-        ) : (
+        ) : activeTab === 'USERS' ? (
           <>
             <h2 style={{ marginBottom: "24px", fontSize: "1.5rem" }}>User Management</h2>
             {loading ? (
@@ -250,6 +302,43 @@ export default function AdminDashboard() {
                         <option value="ADMIN">Admin</option>
                       </select>
                     </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </>
+        ) : (
+          <>
+            <h2 style={{ marginBottom: "24px", fontSize: "1.5rem" }}>Category Management</h2>
+            
+            <div className="glass-panel" style={{ padding: "24px", marginBottom: "24px" }}>
+              <h3 style={{ fontSize: "1.125rem", marginBottom: "16px" }}>Add New Category</h3>
+              <form onSubmit={handleAddCategory} style={{ display: "flex", gap: "16px", alignItems: "flex-end" }}>
+                <div className="input-group" style={{ flex: 1, marginBottom: 0 }}>
+                  <label className="input-label">Name</label>
+                  <input type="text" className="input-field" value={newCatName} onChange={(e) => setNewCatName(e.target.value)} required placeholder="e.g. Pest Control" style={{ marginBottom: 0 }} />
+                </div>
+                <div className="input-group" style={{ flex: 2, marginBottom: 0 }}>
+                  <label className="input-label">Description (Optional)</label>
+                  <input type="text" className="input-field" value={newCatDesc} onChange={(e) => setNewCatDesc(e.target.value)} placeholder="e.g. Bugs and rodents" style={{ marginBottom: 0 }} />
+                </div>
+                <button type="submit" className="btn-primary" disabled={addingCategory} style={{ width: "auto" }}>
+                  {addingCategory ? "Adding..." : "Add"}
+                </button>
+              </form>
+            </div>
+
+            {loading ? (
+              <p>Loading categories...</p>
+            ) : (
+              <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+                {categories.map((cat) => (
+                  <div key={cat.id} className="glass-panel" style={{ padding: "16px 24px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                    <div>
+                      <h3 style={{ fontSize: "1.125rem", fontWeight: 600, marginBottom: "4px" }}>{cat.name}</h3>
+                      <p style={{ color: "var(--text-secondary)", fontSize: "0.875rem", margin: 0 }}>{cat.description || "No description provided"}</p>
+                    </div>
+                    <span style={{ fontSize: "0.75rem", color: "var(--text-secondary)" }}>ID: {cat.id}</span>
                   </div>
                 ))}
               </div>
