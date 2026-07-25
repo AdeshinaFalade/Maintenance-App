@@ -95,7 +95,7 @@ export default function StudentDashboard() {
     <div className="animate-fade-in">
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "32px" }}>
         <div>
-          <h1 style={{ fontSize: "2rem", fontWeight: 700 }}>Student Dashboard</h1>
+          <h1 style={{ fontSize: "2rem", fontWeight: 700 }}>Dashboard</h1>
           <p style={{ color: "var(--text-secondary)" }}>Track and submit your maintenance requests</p>
         </div>
         <button className="btn-primary" style={{ width: "auto" }} onClick={() => setShowForm(!showForm)}>
