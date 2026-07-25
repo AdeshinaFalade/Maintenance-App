@@ -39,6 +39,31 @@ const spec = {
         }
       }
     },
+    '/api/auth/callback/credentials': {
+      post: {
+        summary: 'Sign in to obtain a session cookie',
+        description: 'Note: Because NextAuth uses secure cookies and CSRF protection, it is easiest to test authenticated endpoints in Swagger by simply logging in through the main app UI first (`/login`). Your browser will automatically send the session cookie with your Swagger requests.',
+        requestBody: {
+          required: true,
+          content: {
+            'application/x-www-form-urlencoded': {
+              schema: {
+                type: 'object',
+                properties: {
+                  email: { type: 'string' },
+                  password: { type: 'string' },
+                  csrfToken: { type: 'string', description: 'Required CSRF token from /api/auth/csrf' }
+                }
+              }
+            }
+          }
+        },
+        responses: {
+          '200': { description: 'Authenticated successfully (Sets session cookie)' },
+          '401': { description: 'Invalid credentials' }
+        }
+      }
+    },
     '/api/requests': {
       get: {
         summary: 'Get service requests (Filtered by Role)',
@@ -99,6 +124,59 @@ const spec = {
         responses: {
           '200': { description: 'Assignment successful' },
           '401': { description: 'Unauthorized' }
+        }
+      }
+    },
+    '/api/requests/{id}/status': {
+      put: {
+        summary: 'Update the status of a request (Maintenance only)',
+        parameters: [
+          {
+            name: 'id',
+            in: 'path',
+            required: true,
+            schema: { type: 'string' }
+          }
+        ],
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: {
+                  status: { type: 'string', enum: ['PENDING', 'IN_PROGRESS', 'RESOLVED', 'CANCELLED'] }
+                }
+              }
+            }
+          }
+        },
+        responses: {
+          '200': { description: 'Status updated' },
+          '400': { description: 'Status is required' },
+          '403': { description: 'Not authorized' }
+        }
+      }
+    },
+    '/api/upload': {
+      post: {
+        summary: 'Upload an evidence image',
+        requestBody: {
+          required: true,
+          content: {
+            'multipart/form-data': {
+              schema: {
+                type: 'object',
+                properties: {
+                  file: { type: 'string', format: 'binary' }
+                }
+              }
+            }
+          }
+        },
+        responses: {
+          '200': { description: 'File uploaded successfully' },
+          '400': { description: 'No file received' }
         }
       }
     }
