@@ -1,0 +1,83 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id             String             @id @default(uuid())
+  email          String             @unique
+  password       String
+  firstName      String
+  lastName       String
+  role           String             @default("STUDENT") // STUDENT, STAFF, MAINTENANCE, ADMIN
+  createdAt      DateTime           @default(now())
+  updatedAt      DateTime           @updatedAt
+  
+  // Relations
+  serviceRequests ServiceRequest[]  @relation("SubmittedRequests")
+  assignments     Assignment[]      @relation("AssignedMaintenance")
+  statusUpdates   StatusUpdate[]    @relation("StatusUpdater")
+}
+
+model Category {
+  id             String             @id @default(uuid())
+  name           String             @unique
+  description    String?
+  createdAt      DateTime           @default(now())
+  
+  // Relations
+  serviceRequests ServiceRequest[]
+}
+
+model ServiceRequest {
+  id             String             @id @default(uuid())
+  title          String
+  description    String
+  location       String
+  evidenceUrl    String?
+  status         String             @default("PENDING") // PENDING, IN_PROGRESS, RESOLVED, CANCELLED
+  createdAt      DateTime           @default(now())
+  updatedAt      DateTime           @updatedAt
+
+  // Foreign Keys
+  submitterId    String
+  categoryId     String
+
+  // Relations
+  submitter      User               @relation("SubmittedRequests", fields: [submitterId], references: [id])
+  category       Category           @relation(fields: [categoryId], references: [id])
+  assignment     Assignment?
+  statusUpdates  StatusUpdate[]
+}
+
+model Assignment {
+  id             String             @id @default(uuid())
+  assignedAt     DateTime           @default(now())
+  
+  // Foreign Keys
+  requestId      String             @unique
+  maintenanceId  String
+  
+  // Relations
+  request        ServiceRequest     @relation(fields: [requestId], references: [id])
+  maintenanceOfficer User           @relation("AssignedMaintenance", fields: [maintenanceId], references: [id])
+}
+
+model StatusUpdate {
+  id             String             @id @default(uuid())
+  status         String             // PENDING, IN_PROGRESS, RESOLVED, CANCELLED
+  comment        String?
+  updatedAt      DateTime           @default(now())
+  
+  // Foreign Keys
+  requestId      String
+  updaterId      String
+  
+  // Relations
+  request        ServiceRequest     @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  updater        User               @relation("StatusUpdater", fields: [updaterId], references: [id])
+}
