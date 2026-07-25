@@ -6,6 +6,7 @@ import { useSession } from "next-auth/react";
 export default function StudentDashboard() {
   const { data: session } = useSession();
   const [requests, setRequests] = useState<any[]>([]);
+  const [categories, setCategories] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -32,8 +33,21 @@ export default function StudentDashboard() {
     }
   };
 
+  const fetchCategories = async () => {
+    try {
+      const res = await fetch("/api/categories");
+      const data = await res.json();
+      if (res.ok) {
+        setCategories(data);
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
   useEffect(() => {
     fetchRequests();
+    fetchCategories();
   }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -126,10 +140,9 @@ export default function StudentDashboard() {
                 <label className="input-label">Category</label>
                 <select className="input-field" value={categoryId} onChange={(e) => setCategoryId(e.target.value)} required style={{ appearance: "none", cursor: "pointer" }}>
                   <option value="">Select a category</option>
-                  <option value="Plumbing">Plumbing</option>
-                  <option value="Electrical">Electrical</option>
-                  <option value="Internet">Internet/WiFi</option>
-                  <option value="Furniture">Furniture</option>
+                  {categories.map((cat) => (
+                    <option key={cat.id} value={cat.id}>{cat.name}</option>
+                  ))}
                 </select>
               </div>
             </div>

@@ -72,23 +72,12 @@ export async function POST(req: Request) {
       return NextResponse.json({ message: 'Missing required fields' }, { status: 400 });
     }
 
-    // Find or create the category by name
-    let category = await prisma.category.findUnique({
-      where: { name: categoryId } // categoryId from form is actually the name, e.g. "Plumbing"
-    });
-
-    if (!category) {
-      category = await prisma.category.create({
-        data: { name: categoryId, description: `Auto-created category for ${categoryId}` }
-      });
-    }
-
     const newRequest = await prisma.serviceRequest.create({
       data: {
         title,
         description,
         location,
-        categoryId: category.id,
+        categoryId,
         evidenceUrl,
         submitterId: userId,
         status: 'PENDING'
