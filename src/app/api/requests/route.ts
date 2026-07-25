@@ -20,7 +20,12 @@ export async function GET(req: Request) {
     if (role === 'ADMIN') {
       // Admin sees all requests
       requests = await prisma.serviceRequest.findMany({
-        include: { submitter: true, category: true, assignment: { include: { maintenanceOfficer: true } } },
+        include: { 
+          submitter: true, 
+          category: true, 
+          assignment: { include: { maintenanceOfficer: true } },
+          statusUpdates: { include: { updater: true }, orderBy: { updatedAt: 'desc' } }
+        },
         orderBy: { createdAt: 'desc' }
       });
     } else if (role === 'MAINTENANCE') {
